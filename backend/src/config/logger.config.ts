@@ -1,24 +1,26 @@
 import { createLogger, format, transports } from 'winston';
+import { TransformableInfo } from 'logform';
 
-const { combine, timestamp, printf, colorize } = format;
+const { combine, timestamp, printf } = format;
 
-interface LogEntry {
+interface LogEntry extends TransformableInfo {
+  timestamp: string;
   level: string;
   message: string;
-  timestamp: string;
-  [key: string]: any;
 }
 
-const myFormat = printf(({ level, message, timestamp, ...metadata }: LogEntry) => {
-  let msg = `${timestamp} [${level}]: ${message}`;
+const myFormat = printf((info: TransformableInfo) => {
+  const { level, message, timestamp, ...metadata } = info as LogEntry;
+  let msg = `${timestamp} [${level}] : ${message}`;
+  
   if (Object.keys(metadata).length > 0) {
-    msg += ` ${JSON.stringify(metadata)}`;
+    msg += JSON.stringify(metadata);
   }
   return msg;
 });
 
 export const logger = createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  level: process.env.LOG_LEVEL || 'info',
   format: combine(
     timestamp(),
     myFormat
@@ -26,24 +28,26 @@ export const logger = createLogger({
   transports: [
     new transports.Console({
       format: combine(
-        colorize(),
         timestamp(),
         myFormat
-      ),
+      )
     }),
-    new transports.File({ 
-      filename: 'logs/error.log', 
+    new transports.File({
+      filename: 'logs/error.log',
       level: 'error',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
+      format: combine(
+        timestamp(),
+        myFormat
+      )
     }),
-    new transports.File({ 
+    new transports.File({
       filename: 'logs/combined.log',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-  ],
-  exitOnError: false,
+      format: combine(
+        timestamp(),
+        myFormat
+      )
+    })
+  ]
 });
 
 export class Logger {
