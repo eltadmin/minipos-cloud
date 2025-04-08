@@ -3,6 +3,10 @@ node_modules/
 .pnp/
 .pnp.js
 
+# Keep package-lock.json files
+!package-lock.json
+!*/package-lock.json
+
 # Testing
 coverage/
 .nyc_output/
