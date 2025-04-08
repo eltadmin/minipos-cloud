@@ -7,7 +7,7 @@
     "backend"
   ],
   "scripts": {
-    "postinstall": "simple-git-hooks",
+    "prepare": "npx simple-git-hooks",
     "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
@@ -20,10 +20,19 @@
     "lint:backend": "cd backend && npm run lint"
   },
   "simple-git-hooks": {
-    "pre-commit": "npm test"
+    "pre-commit": "npx --no-install lint-staged"
+  },
+  "lint-staged": {
+    "frontend/**/*.{js,jsx,ts,tsx}": [
+      "cd frontend && npm run lint"
+    ],
+    "backend/**/*.{js,ts}": [
+      "cd backend && npm run lint"
+    ]
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
+    "lint-staged": "^15.2.2",
     "simple-git-hooks": "^2.9.0"
   }
 }
