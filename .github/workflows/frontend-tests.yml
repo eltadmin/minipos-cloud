@@ -27,18 +27,26 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
         
-    - name: Install root dependencies
-      run: npm ci
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm i -D @swc/core @swc/jest
       working-directory: .
         
     - name: Install frontend dependencies
-      run: npm ci
+      run: |
+        npm ci
+        npm i -D @swc/core @swc/jest
         
     - name: Run unit tests
-      run: npm test -- --passWithNoTests
+      run: npm run test:unit
+      env:
+        NODE_ENV: test
       
     - name: Run integration tests
-      run: npm test -- --testPathPattern='.*\\.int\\.test\\.[jt]sx?$' --passWithNoTests
+      run: npm run test:integration
+      env:
+        NODE_ENV: test
       
     - name: Run linting
       run: npm run lint 
