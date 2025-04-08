@@ -20,11 +20,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
+        
+    - name: Configure Git
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
         
     - name: Cache node modules
       uses: actions/cache@v3
@@ -33,7 +40,7 @@ jobs:
         path: |
           ./frontend/node_modules
           ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('./frontend/package-lock.json') }}
+        key: ${{ runner.os }}-node-${{ hashFiles('./frontend/package.json') }}
         restore-keys: |
           ${{ runner.os }}-node-
     
@@ -47,8 +54,7 @@ jobs:
           ${{ runner.os }}-nextjs-
     
     - name: Install dependencies
-      if: steps.npm-cache.outputs.cache-hit != 'true'
-      run: npm ci
+      run: npm install
     
     - name: Run linting
       if: matrix.test-group == 'unit'
@@ -94,11 +100,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
+        
+    - name: Configure Git
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
         
     - name: Cache node modules
       uses: actions/cache@v3
@@ -107,7 +120,7 @@ jobs:
         path: |
           ./backend/node_modules
           ~/.npm
-        key: ${{ runner.os }}-node-backend-${{ hashFiles('./backend/package-lock.json') }}
+        key: ${{ runner.os }}-node-backend-${{ hashFiles('./backend/package.json') }}
         restore-keys: |
           ${{ runner.os }}-node-backend-
     
@@ -122,8 +135,7 @@ jobs:
           ${{ runner.os }}-tsc-
     
     - name: Install dependencies
-      if: steps.npm-cache-backend.outputs.cache-hit != 'true'
-      run: npm ci
+      run: npm install
     
     - name: Run linting
       if: matrix.test-group == 'unit'
