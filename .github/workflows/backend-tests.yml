@@ -32,13 +32,16 @@ jobs:
         cd ..
         npm install
         cd backend
-        npm install
+        npm ci
         
     - name: Format code
       run: npm run format
         
     - name: Run linting
       run: npm run lint
+      
+    - name: Build project
+      run: npm run build
       
     - name: Run unit tests
       run: npm run test:unit
