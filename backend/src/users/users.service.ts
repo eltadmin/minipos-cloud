@@ -63,4 +63,19 @@ export class UsersService {
     user.accountRoles = remainingRoles;
     return this.usersRepository.save(user);
   }
+
+  async removeRole(userId: number, roleId: number): Promise<User> {
+    const user = await this.findOne(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const roleIndex = user.roles.findIndex(role => role.id === roleId);
+    if (roleIndex === -1) {
+      throw new NotFoundException(`Role with ID ${roleId} not found for user`);
+    }
+
+    user.roles.splice(roleIndex, 1);
+    return this.usersRepository.save(user);
+  }
 } 
