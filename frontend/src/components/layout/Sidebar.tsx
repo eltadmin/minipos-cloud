@@ -8,7 +8,6 @@ import {
   ListItemIcon,
   ListItemText,
   useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import StoreIcon from '@mui/icons-material/Store';
@@ -36,7 +35,6 @@ const menuItems = [
 export default function Sidebar({ drawerWidth, mobileOpen, onDrawerToggle }: SidebarProps) {
   const router = useRouter();
   const theme = useTheme();
-  const _isDesktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const drawer = (
     <Box>
