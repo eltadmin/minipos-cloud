@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
@@ -48,7 +48,7 @@ export class UsersService {
     }
   }
 
-  async addAccountAccess(userId: string, accountId: string, role: string): Promise<User> {
+  async addAccountAccess(userId: string, accountId: string, role: UserRole): Promise<User> {
     const user = await this.findOne(userId);
     user.accountRoles = {
       ...user.accountRoles,
@@ -59,23 +59,8 @@ export class UsersService {
 
   async removeAccountAccess(userId: string, accountId: string): Promise<User> {
     const user = await this.findOne(userId);
-    const { [accountId]: removedRole, ...remainingRoles } = user.accountRoles;
+    const { [accountId]: _, ...remainingRoles } = user.accountRoles;
     user.accountRoles = remainingRoles;
-    return this.usersRepository.save(user);
-  }
-
-  async removeRole(userId: number, roleId: number): Promise<User> {
-    const user = await this.findOne(userId);
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    const roleIndex = user.roles.findIndex(role => role.id === roleId);
-    if (roleIndex === -1) {
-      throw new NotFoundException(`Role with ID ${roleId} not found for user`);
-    }
-
-    user.roles.splice(roleIndex, 1);
     return this.usersRepository.save(user);
   }
 } 
