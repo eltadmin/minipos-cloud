@@ -172,31 +172,45 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - name: Setup SSH key
+      uses: webfactory/ssh-agent@v0.8.0
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: eu-central-1
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
     
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-    
-    - name: Build and push Docker images
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
+    - name: Add server to known hosts
       run: |
-        # Build and push frontend
-        docker build -t $ECR_REGISTRY/minipos-frontend:$IMAGE_TAG ./frontend
-        docker push $ECR_REGISTRY/minipos-frontend:$IMAGE_TAG
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Build Docker images
+      run: |
+        # Build frontend
+        docker build -t minipos-frontend:latest ./frontend
+        docker save minipos-frontend:latest > frontend-image.tar
         
-        # Build and push backend
-        docker build -t $ECR_REGISTRY/minipos-backend:$IMAGE_TAG ./backend
-        docker push $ECR_REGISTRY/minipos-backend:$IMAGE_TAG
+        # Build backend
+        docker build -t minipos-backend:latest ./backend
+        docker save minipos-backend:latest > backend-image.tar
     
-    - name: Update ECS services
+    - name: Transfer Docker images
       run: |
-        aws ecs update-service --cluster minipos-cluster --service frontend-service --force-new-deployment
-        aws ecs update-service --cluster minipos-cluster --service backend-service --force-new-deployment 
+        scp frontend-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+        scp backend-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+    
+    - name: Deploy to server
+      run: |
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} '
+          # Load images
+          docker load < /tmp/frontend-image.tar
+          docker load < /tmp/backend-image.tar
+          
+          # Stop existing containers
+          docker-compose down || true
+          
+          # Start new containers
+          docker-compose up -d
+          
+          # Cleanup
+          rm /tmp/frontend-image.tar
+          rm /tmp/backend-image.tar
+        ' 
