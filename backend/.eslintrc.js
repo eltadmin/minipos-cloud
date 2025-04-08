@@ -20,10 +20,22 @@ module.exports = {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': ['error', { 
       'argsIgnorePattern': '^_',
       'varsIgnorePattern': '^_',
     }],
   },
+  overrides: [
+    {
+      // These files need to use 'any' type for external integrations
+      files: [
+        'src/cash-registers/entities/cash-register.entity.ts',
+        'src/cash-registers/services/communication.service.ts',
+        'src/config/logger.config.ts'
+      ],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off'
+      }
+    }
+  ]
 }; 
