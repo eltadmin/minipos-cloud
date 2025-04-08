@@ -7,7 +7,7 @@
     "backend"
   ],
   "scripts": {
-    "prepare": "npx simple-git-hooks",
+    "setup-hooks": "simple-git-hooks",
     "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
