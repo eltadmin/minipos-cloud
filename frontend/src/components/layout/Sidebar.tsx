@@ -16,6 +16,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
+import Image from 'next/image';
 
 interface SidebarProps {
   drawerWidth: number;
@@ -35,7 +36,7 @@ const menuItems = [
 export default function Sidebar({ drawerWidth, mobileOpen, onDrawerToggle }: SidebarProps) {
   const router = useRouter();
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('sm'));
+  const _isDesktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const drawer = (
     <Box>
@@ -50,7 +51,13 @@ export default function Sidebar({ drawerWidth, mobileOpen, onDrawerToggle }: Sid
           borderColor: 'divider',
         }}
       >
-        <img src="/logo.png" alt="MiniPOS Logo" style={{ height: 40 }} />
+        <Image 
+          src="/logo.png" 
+          alt="MiniPOS Cloud Logo" 
+          width={150} 
+          height={50}
+          priority
+        />
       </Box>
 
       {/* Navigation Menu */}
