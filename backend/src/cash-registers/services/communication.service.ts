@@ -128,13 +128,46 @@ export class CashRegisterCommunicationService {
       },
     };
 
+    // Process fiscal reports if present
+    if (data.data && data.data[0] && data.data[0].Z) {
+      await this.processFiscalReports(cashRegister, data.data[0].Z);
+    }
+
+    // Process sales documents if present
+    if (data.data && data.data[0] && data.data[0].S) {
+      await this.processSaleDocuments(cashRegister, data.data[0].S);
+    }
+
     // Add tasks based on status and settings
-    if (cashRegister.status === CashRegisterStatus.ACTIVE) {
-      // Add pending tasks (to be implemented)
-      // response.SRES.tasks.push(...pendingTasks);
+    if (cashRegister.status === CashRegisterStatus.ACTIVE || cashRegister.status === CashRegisterStatus.DEMO) {
+      // Check if we need to sync products
+      const syncTasks = await this.generateSyncTasks(cashRegister);
+      if (syncTasks.length > 0) {
+        response.SRES.tasks.push(...syncTasks);
+      }
     }
 
     return response;
+  }
+
+  private async processFiscalReports(cashRegister: CashRegister, reports: any[]): Promise<void> {
+    // TODO: Implement fiscal report processing
+    this.logger.log(`Processing ${reports.length} fiscal reports for ${cashRegister.serialNumber}`);
+  }
+
+  private async processSaleDocuments(cashRegister: CashRegister, sales: any[]): Promise<void> {
+    // TODO: Implement sales document processing
+    this.logger.log(`Processing ${sales.length} sales documents for ${cashRegister.serialNumber}`);
+  }
+
+  private async generateSyncTasks(cashRegister: CashRegister): Promise<any[]> {
+    const tasks = [];
+
+    // TODO: Generate tasks for syncing products, departments, operators, etc.
+    // This requires querying the database for entities with version numbers higher than
+    // what's reported by the cash register
+
+    return tasks;
   }
 
   private buildErrorResponse(message: string): string {
