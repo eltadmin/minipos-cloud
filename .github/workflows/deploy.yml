@@ -19,12 +19,14 @@ jobs:
         ssh-private-key: |
           ${{ secrets.SSH_PRIVATE_KEY }}
     
-    - name: Add server to known hosts
+    - name: Configure SSH
       run: |
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
     
     - name: Build Docker images
       run: |
@@ -38,12 +40,12 @@ jobs:
     
     - name: Transfer Docker images
       run: |
-        scp -o StrictHostKeyChecking=no -P 6401 frontend-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
-        scp -o StrictHostKeyChecking=no -P 6401 backend-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+        scp -o StrictHostKeyChecking=no -P 6401 frontend-image.tar gepi@${{ secrets.SERVER_HOST }}:/tmp/
+        scp -o StrictHostKeyChecking=no -P 6401 backend-image.tar gepi@${{ secrets.SERVER_HOST }}:/tmp/
     
     - name: Deploy to server
       run: |
-        ssh -o StrictHostKeyChecking=no -p 6401 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} '
+        ssh -o StrictHostKeyChecking=no -p 6401 gepi@${{ secrets.SERVER_HOST }} '
           # Load images
           docker load < /tmp/frontend-image.tar
           docker load < /tmp/backend-image.tar
