@@ -22,7 +22,9 @@ jobs:
     - name: Add server to known hosts
       run: |
         mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
         ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
     
     - name: Build Docker images
       run: |
