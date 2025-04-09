@@ -15,21 +15,26 @@ jobs:
     
     - name: Setup SSH
       run: |
-        # Create .ssh directory in the workspace
-        mkdir -p $GITHUB_WORKSPACE/.ssh
-        chmod 700 $GITHUB_WORKSPACE/.ssh
+        # Create .ssh directory in runner temp
+        mkdir -p $RUNNER_TEMP/.ssh
+        chmod 700 $RUNNER_TEMP/.ssh
         
         # Write the private key to a file
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $GITHUB_WORKSPACE/.ssh/id_ed25519
-        chmod 600 $GITHUB_WORKSPACE/.ssh/id_ed25519
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $RUNNER_TEMP/.ssh/id_ed25519
+        chmod 600 $RUNNER_TEMP/.ssh/id_ed25519
         
         # Add the server to known hosts
-        ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> $GITHUB_WORKSPACE/.ssh/known_hosts
-        chmod 600 $GITHUB_WORKSPACE/.ssh/known_hosts
+        ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> $RUNNER_TEMP/.ssh/known_hosts
+        chmod 600 $RUNNER_TEMP/.ssh/known_hosts
+        
+        # Configure SSH to use our custom directory
+        echo "IdentityFile $RUNNER_TEMP/.ssh/id_ed25519" > $RUNNER_TEMP/.ssh/config
+        echo "UserKnownHostsFile $RUNNER_TEMP/.ssh/known_hosts" >> $RUNNER_TEMP/.ssh/config
+        chmod 600 $RUNNER_TEMP/.ssh/config
         
         # Start ssh-agent and add the key
         eval $(ssh-agent -s)
-        ssh-add $GITHUB_WORKSPACE/.ssh/id_ed25519
+        ssh-add $RUNNER_TEMP/.ssh/id_ed25519
     
     - name: Build Docker images
       run: |
@@ -43,12 +48,12 @@ jobs:
     
     - name: Transfer Docker images
       run: |
-        scp -o StrictHostKeyChecking=no -P 6401 frontend-image.tar gepi@${{ secrets.SERVER_HOST }}:/tmp/
-        scp -o StrictHostKeyChecking=no -P 6401 backend-image.tar gepi@${{ secrets.SERVER_HOST }}:/tmp/
+        scp -F $RUNNER_TEMP/.ssh/config -o StrictHostKeyChecking=no -P 6401 frontend-image.tar gepi@${{ secrets.SERVER_HOST }}:/tmp/
+        scp -F $RUNNER_TEMP/.ssh/config -o StrictHostKeyChecking=no -P 6401 backend-image.tar gepi@${{ secrets.SERVER_HOST }}:/tmp/
     
     - name: Deploy to server
       run: |
-        ssh -o StrictHostKeyChecking=no -p 6401 gepi@${{ secrets.SERVER_HOST }} '
+        ssh -F $RUNNER_TEMP/.ssh/config -o StrictHostKeyChecking=no -p 6401 gepi@${{ secrets.SERVER_HOST }} '
           # Load images
           docker load < /tmp/frontend-image.tar
           docker load < /tmp/backend-image.tar
