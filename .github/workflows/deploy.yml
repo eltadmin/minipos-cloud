@@ -13,13 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install SSH Key
-      uses: shimataro/ssh-key-action@v2
-      with:
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        known_hosts: "[${{ secrets.SERVER_HOST }}]:6401"
-        if_key_exists: fail
-    
     - name: Build Docker images
       run: |
         # Build frontend
@@ -31,13 +24,24 @@ jobs:
         docker save minipos-backend:latest > backend-image.tar
     
     - name: Transfer Docker images
-      run: |
-        scp -o StrictHostKeyChecking=no -P 6401 frontend-image.tar gepi@${{ secrets.SERVER_HOST }}:/tmp/
-        scp -o StrictHostKeyChecking=no -P 6401 backend-image.tar gepi@${{ secrets.SERVER_HOST }}:/tmp/
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        port: 6401
+        username: gepi
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        source: "frontend-image.tar,backend-image.tar"
+        target: "/tmp/"
+        strip_components: 0
     
     - name: Deploy to server
-      run: |
-        ssh -o StrictHostKeyChecking=no -p 6401 gepi@${{ secrets.SERVER_HOST }} '
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        port: 6401
+        username: gepi
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
           # Load images
           docker load < /tmp/frontend-image.tar
           docker load < /tmp/backend-image.tar
@@ -50,5 +54,4 @@ jobs:
           
           # Cleanup
           rm /tmp/frontend-image.tar
-          rm /tmp/backend-image.tar
-        ' 
+          rm /tmp/backend-image.tar 
