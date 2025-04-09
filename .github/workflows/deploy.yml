@@ -13,27 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Build Docker images
-      run: |
-        # Build frontend
-        docker build -t minipos-frontend:latest ./frontend
-        docker save minipos-frontend:latest > frontend-image.tar
-        
-        # Build backend
-        docker build -t minipos-backend:latest ./backend
-        docker save minipos-backend:latest > backend-image.tar
-    
-    - name: Transfer Docker images
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        port: 6401
-        username: gepi
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: "frontend-image.tar,backend-image.tar"
-        target: "/tmp/"
-        strip_components: 0
-    
     - name: Deploy to server
       uses: appleboy/ssh-action@master
       with:
@@ -42,16 +21,28 @@ jobs:
         username: gepi
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          # Load images
-          docker load < /tmp/frontend-image.tar
-          docker load < /tmp/backend-image.tar
+          # Create deployment directory if it doesn't exist
+          mkdir -p /home/gepi/deployments/minipos-cloud
+          cd /home/gepi/deployments/minipos-cloud
+          
+          # Clone or pull the latest code
+          if [ -d .git ]; then
+            git pull origin main
+          else
+            git clone https://github.com/eltadmin/minipos-cloud.git .
+          fi
+          
+          # Build and deploy frontend
+          cd frontend
+          docker build -t minipos-frontend:latest .
+          
+          # Build and deploy backend
+          cd ../backend
+          docker build -t minipos-backend:latest .
           
           # Stop existing containers
+          cd ..
           docker-compose down || true
           
           # Start new containers
-          docker-compose up -d
-          
-          # Cleanup
-          rm /tmp/frontend-image.tar
-          rm /tmp/backend-image.tar 
+          docker-compose up -d 
