@@ -13,20 +13,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup SSH key
-      uses: webfactory/ssh-agent@v0.8.0
-      with:
-        ssh-private-key: |
-          ${{ secrets.SSH_PRIVATE_KEY }}
-    
-    - name: Configure SSH
+    - name: Setup SSH
       run: |
-        mkdir -p $HOME/.ssh
-        chmod 700 $HOME/.ssh
-        ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> $HOME/.ssh/known_hosts
-        chmod 600 $HOME/.ssh/known_hosts
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_ed25519
-        chmod 600 $HOME/.ssh/id_ed25519
+        # Create .ssh directory in the workspace
+        mkdir -p $GITHUB_WORKSPACE/.ssh
+        chmod 700 $GITHUB_WORKSPACE/.ssh
+        
+        # Write the private key to a file
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $GITHUB_WORKSPACE/.ssh/id_ed25519
+        chmod 600 $GITHUB_WORKSPACE/.ssh/id_ed25519
+        
+        # Add the server to known hosts
+        ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> $GITHUB_WORKSPACE/.ssh/known_hosts
+        chmod 600 $GITHUB_WORKSPACE/.ssh/known_hosts
+        
+        # Start ssh-agent and add the key
+        eval $(ssh-agent -s)
+        ssh-add $GITHUB_WORKSPACE/.ssh/id_ed25519
     
     - name: Build Docker images
       run: |
