@@ -1,0 +1,57 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup SSH key
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
+    - name: Add server to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Build Docker images
+      run: |
+        # Build frontend
+        docker build -t minipos-frontend:latest ./frontend
+        docker save minipos-frontend:latest > frontend-image.tar
+        
+        # Build backend
+        docker build -t minipos-backend:latest ./backend
+        docker save minipos-backend:latest > backend-image.tar
+    
+    - name: Transfer Docker images
+      run: |
+        scp -P 6401 frontend-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+        scp -P 6401 backend-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+    
+    - name: Deploy to server
+      run: |
+        ssh -p 6401 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} '
+          # Load images
+          docker load < /tmp/frontend-image.tar
+          docker load < /tmp/backend-image.tar
+          
+          # Stop existing containers
+          docker-compose down || true
+          
+          # Start new containers
+          docker-compose up -d
+          
+          # Cleanup
+          rm /tmp/frontend-image.tar
+          rm /tmp/backend-image.tar
+        ' 
