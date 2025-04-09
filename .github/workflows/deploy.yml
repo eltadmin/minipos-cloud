@@ -17,7 +17,7 @@ jobs:
       uses: shimataro/ssh-key-action@v2
       with:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        known_hosts: ${{ secrets.SERVER_HOST }}
+        known_hosts: "[${{ secrets.SERVER_HOST }}]:6401"
         if_key_exists: fail
     
     - name: Build Docker images
