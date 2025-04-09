@@ -21,12 +21,12 @@ jobs:
     
     - name: Configure SSH
       run: |
-        mkdir -p ~/.ssh
-        chmod 700 ~/.ssh
-        ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-        chmod 600 ~/.ssh/known_hosts
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
+        mkdir -p $HOME/.ssh
+        chmod 700 $HOME/.ssh
+        ssh-keyscan -H -p 6401 ${{ secrets.SERVER_HOST }} >> $HOME/.ssh/known_hosts
+        chmod 600 $HOME/.ssh/known_hosts
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_ed25519
+        chmod 600 $HOME/.ssh/id_ed25519
     
     - name: Build Docker images
       run: |
